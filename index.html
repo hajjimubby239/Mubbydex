@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mubbydex — Private Perps on Solana × Arcium</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a10;--surface:#0d1420;--surface2:#111927;--border:#1e2d42;
+  --accent:#00e5c0;--accent2:#7b5cf5;--accent3:#f5a623;
+  --text:#e8edf5;--muted:#5a7a9a;--danger:#ff4d6d;--success:#00e5c0;
+  --mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+.app{display:grid;grid-template-rows:auto 1fr;min-height:100vh}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:var(--mono);font-size:16px;font-weight:700}
+.logo span{color:var(--accent)}
+.header-right{display:flex;align-items:center;gap:12px}
+.chip{background:rgba(0,229,192,0.1);border:1px solid rgba(0,229,192,0.25);color:var(--accent);font-size:11px;font-family:var(--mono);padding:3px 10px;border-radius:20px}
+.chip.arc{background:rgba(123,92,245,0.1);border-color:rgba(123,92,245,0.3);color:#a78bf7}
+.wallet-btn{background:var(--accent2);color:#fff;border:none;font-family:var(--sans);font-size:13px;font-weight:500;padding:7px 16px;border-radius:8px;cursor:pointer}
+.main{display:grid;grid-template-columns:1fr 340px;gap:0}
+.panel{background:var(--surface);border-right:1px solid var(--border);padding:20px}
+.panel-title{font-size:11px;font-family:var(--mono);color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px}
+.tabs{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:3px;margin-bottom:20px}
+.tab{flex:1;text-align:center;padding:7px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all 0.15s}
+.tab.active.buy{background:rgba(0,229,192,0.15);color:var(--accent)}
+.tab.active.sell{background:rgba(255,77,109,0.15);color:var(--danger)}
+.input-group{margin-bottom:14px}
+.input-label{font-size:11px;color:var(--muted);margin-bottom:6px;font-family:var(--mono)}
+.input-row{display:flex;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color 0.15s}
+.input-row:focus-within{border-color:rgba(0,229,192,0.4)}
+.input-row input{flex:1;background:none;border:none;color:var(--text);font-family:var(--mono);font-size:14px;padding:10px 12px;outline:none}
+.input-row .token{padding:8px 12px;font-size:12px;font-family:var(--mono);color:var(--muted);border-left:1px solid var(--border)}
+.input-row select{flex:1;background:none;border:none;color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 12px;outline:none;cursor:pointer;appearance:none}
+.leverage-row{display:flex;gap:6px;margin-bottom:14px}
+.lev-btn{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:11px;padding:6px;border-radius:6px;cursor:pointer;transition:all 0.15s}
+.lev-btn.active{border-color:var(--accent2);color:#a78bf7;background:rgba(123,92,245,0.1)}
+.privacy-box{background:linear-gradient(135deg,rgba(123,92,245,0.08),rgba(0,229,192,0.05));border:1px solid rgba(123,92,245,0.25);border-radius:10px;padding:14px;margin-bottom:16px}
+.privacy-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.privacy-title{font-size:12px;font-weight:600;color:#a78bf7;display:flex;align-items:center;gap:6px}
+.privacy-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.toggle{position:relative;width:36px;height:20px}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.slider{position:absolute;inset:0;background:#1e2d42;border-radius:20px;cursor:pointer;transition:background 0.2s}
+.slider:before{content:'';position:absolute;width:14px;height:14px;top:3px;left:3px;background:#fff;border-radius:50%;transition:transform 0.2s}
+input:checked+.slider{background:var(--accent2)}
+input:checked+.slider:before{transform:translateX(16px)}
+.arc-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)}
+.arc-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,229,192,0.4)}50%{opacity:0.8;box-shadow:0 0 0 4px rgba(0,229,192,0)}}
+.arc-text{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.arc-text strong{color:var(--accent);font-weight:400}
+.submit-btn{width:100%;padding:13px;border:none;border-radius:10px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.submit-btn.buy-btn{background:var(--accent);color:#060a10}
+.submit-btn.sell-btn{background:var(--danger);color:#fff}
+.right-panel{display:flex;flex-direction:column}
+.mini-panel{border-bottom:1px solid var(--border);padding:16px 20px}
+.ticker-row{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.price{font-family:var(--mono);font-size:22px;font-weight:700}
+.price-change{font-size:12px;font-family:var(--mono)}
+.positive{color:var(--success)}
+.negative{color:var(--danger)}
+.position-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px}
+.pos-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pos-pair{font-family:var(--mono);font-size:13px;font-weight:700}
+.pos-side{font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:4px}
+.pos-side.long{background:rgba(0,229,192,0.15);color:var(--accent)}
+.pos-side.short{background:rgba(255,77,109,0.15);color:var(--danger)}
+.pos-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat-label{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.stat-val{font-size:12px;font-family:var(--mono);margin-top:1px}
+.blurred{filter:blur(5px);user-select:none;transition:filter 0.3s}
+.privacy-label{font-size:10px;color:var(--accent2);font-family:var(--mono);margin-left:6px}
+.pnl-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,229,192,0.1);border:1px solid rgba(0,229,192,0.2);border-radius:4px;padding:2px 8px;font-size:10px;font-family:var(--mono);color:var(--accent)}
+.orderbook{flex:1;overflow:hidden;padding:16px 20px}
+.ob-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:3px;position:relative}
+.ob-row .ob-bar{position:absolute;right:0;top:0;bottom:0;opacity:0.12;border-radius:2px}
+.ob-row.ask .ob-bar{background:var(--danger)}
+.ob-row.bid .ob-bar{background:var(--success)}
+.ob-spread{text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:4px 0}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);border:1px solid var(--accent2);border-radius:10px;padding:16px;max-width:280px;font-size:12px;transform:translateY(100px);opacity:0;transition:all 0.3s;z-index:100}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-title{font-family:var(--mono);color:#a78bf7;font-size:11px;margin-bottom:8px;letter-spacing:1px}
+.toast-step{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:var(--muted)}
+.toast-step.done{color:var(--text)}
+.step-dot{width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0}
+.toast-step.done .step-dot{background:var(--accent)}
+.toast-step.active .step-dot{background:var(--accent);animation:pulse 1s infinite}
+.chart-area{height:100px;position:relative;overflow:hidden;margin-bottom:12px}
+.chart-area svg{width:100%;height:100%}
+.mkt-stats{display:flex;gap:16px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--border)}
+.mkt-stat .label{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.mkt-stat .val{font-size:12px;font-family:var(--mono);margin-top:2px}
+.footer-note{padding:10px 20px;font-size:10px;color:var(--muted);font-family:var(--mono);display:flex;align-items:center;gap:8px;border-top:1px solid var(--border)}
+.order-summary{background:var(--bg);border-radius:8px;padding:12px;margin-bottom:14px;border:1px solid var(--border)}
+.order-summary-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px}
+.order-summary-row:last-child{margin-bottom:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">Mubby<span>dex</span></div>
+    <div class="header-right">
+      <span class="chip arc">Arcium MPC ●</span>
+      <span class="chip">Solana</span>
+      <button class="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="panel">
+      <div class="panel-title">Place Order</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;background:var(--bg);border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="cycleMarket()">
+        <div>
+          <div style="font-family:var(--mono);font-size:14px;font-weight:700" id="market-name">SOL-PERP</div>
+          <div style="font-size:11px;color:var(--muted)">Perpetual · 10× max</div>
+        </div>
+        <div style="margin-left:auto;font-size:11px;color:var(--muted);font-family:var(--mono)">▼ switch</div>
+      </div>
+      <div class="chart-area" id="chart-area"></div>
+      <div class="tabs">
+        <div class="tab active buy" id="tab-buy" onclick="setTab('buy')">Long</div>
+        <div class="tab sell" id="tab-sell" onclick="setTab('sell')">Short</div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Order type</div>
+        <div class="input-row">
+          <select id="order-type">
+            <option>Market</option>
+            <option>Limit</option>
+            <option>Stop-Limit</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Size</div>
+        <div class="input-row">
+          <input type="number" placeholder="0.00" id="size-input" value="1.5"/>
+          <div class="token">SOL</div>
+        </div>
+      </div>
+      <div class="input-label" style="margin-bottom:6px">Leverage</div>
+      <div class="leverage-row">
+        <button class="lev-btn" onclick="setLev(this,'2×')">2×</button>
+        <button class="lev-btn active" onclick="setLev(this,'5×')">5×</button>
+        <button class="lev-btn" onclick="setLev(this,'10×')">10×</button>
+        <button class="lev-btn" onclick="setLev(this,'20×')">20×</button>
+      </div>
+      <div class="privacy-box" style="margin-top:14px">
+        <div class="privacy-header">
+          <div class="privacy-title">🔒 Arcium Privacy Mode</div>
+          <label class="toggle">
+            <input type="checkbox" id="privacy-toggle" checked onchange="togglePrivacy(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="privacy-desc" id="privacy-desc">Position size, entry price & liquidation threshold are computed privately via MPC. Only final PnL is revealed on-chain.</div>
+      </div>
+      <div class="arc-row">
+        <div class="arc-dot"></div>
+        <div class="arc-text">Arcium cluster: <strong>3/3 nodes</strong> online · MPC circuit ready</div>
+      </div>
+      <div class="order-summary">
+        <div class="order-summary-row"><span>Entry price</span><span style="color:var(--text)" id="entry-price">$148.32</span></div>
+        <div class="order-summary-row"><span>Notional</span><span style="color:var(--text)" id="notional">$1,113.48</span></div>
+        <div class="order-summary-row">
+          <span>Liq. threshold</span>
+          <span id="liq-val" class="blurred">$118.65</span>
+          <span class="privacy-label" id="liq-badge">MPC-shielded</span>
+        </div>
+        <div class="order-summary-row"><span>Fee</span><span style="color:var(--text)">0.02%</span></div>
+      </div>
+      <button class="submit-btn buy-btn" id="submit-btn" onclick="submitOrder()">Open Long Position</button>
+    </div>
+    <div class="right-panel">
+      <div class="mini-panel">
+        <div class="panel-title">SOL-PERP</div>
+        <div class="ticker-row">
+          <div class="price" id="live-price">$148.32</div>
+          <div class="price-change positive" id="price-change">+2.14%</div>
+        </div>
+      </div>
+      <div class="mkt-stats">
+        <div class="mkt-stat"><div class="label">Open Interest</div><div class="val positive">$24.8M</div></div>
+        <div class="mkt-stat"><div class="label">24h Volume</div><div class="val">$187.3M</div></div>
+        <div class="mkt-stat"><div class="label">Funding</div><div class="val positive">+0.012%</div></div>
+      </div>
+      <div class="mini-panel">
+        <div class="panel-title">My Positions <span class="privacy-label" id="pos-priv-label">● Arcium-shielded</span></div>
+        <div class="position-card">
+          <div class="pos-header">
+            <div class="pos-pair">SOL-PERP</div>
+            <span class="pos-side long">LONG 5×</span>
+          </div>
+          <div class="pos-stats">
+            <div><div class="stat-label">SIZE</div><div class="stat-val blurred" id="pos-size">2.4 SOL</div></div>
+            <div><div class="stat-label">ENTRY</div><div class="stat-val blurred" id="pos-entry">$141.20</div></div>
+            <div><div class="stat-label">LIQ PRICE</div><div class="stat-val blurred" id="pos-liq">$122.05</div></div>
+            <div><div class="stat-label">REALIZED PNL</div><div class="stat-val"><span class="pnl-badge">+$43.12</span></div></div>
+          </div>
+        </div>
+        <div class="position-card">
+          <div class="pos-header">
+            <div class="pos-pair">BTC-PERP</div>
+            <span class="pos-side short">SHORT 2×</span>
+          </div>
+          <div class="pos-stats">
+            <div><div class="stat-label">SIZE</div><div class="stat-val blurred">0.12 BTC</div></div>
+            <div><div class="stat-label">ENTRY</div><div class="stat-val blurred">$69,140</div></div>
+            <div><div class="stat-label">LIQ PRICE</div><div class="stat-val blurred">$74,800</div></div>
+            <div><div class="stat-label">REALIZED PNL</div><div class="stat-val"><span class="pnl-badge" style="background:rgba(255,77,109,0.1);border-color:rgba(255,77,109,0.2);color:var(--danger)">-$18.40</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="orderbook">
+        <div class="panel-title" style="margin-bottom:10px">Order Book</div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px">
+          <span>PRICE</span><span>SIZE</span><span>TOTAL</span>
+        </div>
+        <div id="asks"></div>
+        <div class="ob-spread" id="spread-row">$148.32 · Spread: $0.02</div>
+        <div id="bids"></div>
+      </div>
+      <div class="footer-note">🔒 Positions & orders shielded by Arcium MPC · Only PnL revealed on-chain</div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">
+  <div class="toast-title">ARCIUM MPC FLOW</div>
+  <div class="toast-step done" id="step1"><div class="step-dot"></div>Order submitted to MPC cluster</div>
+  <div class="toast-step" id="step2"><div class="step-dot"></div>Secret-sharing across 3 nodes</div>
+  <div class="toast-step" id="step3"><div class="step-dot"></div>Private liquidation check</div>
+  <div class="toast-step" id="step4"><div class="step-dot"></div>PnL revealed on-chain ✓</div>
+</div>
+<script>
+let tab='buy',price=148.32,lev='5×';
+let markets=['SOL-PERP','BTC-PERP','ETH-PERP','JTO-PERP'],mktIdx=0;
+
+function drawChart(){
+  const el=document.getElementById('chart-area');
+  const pts=[];let v=148;
+  for(let i=0;i<60;i++){v+=((Math.random()-0.48)*2);pts.push(Math.max(130,Math.min(165,v)));}
+  const mn=Math.min(...pts),mx=Math.max(...pts);
+  const w=680,h=100;
+  const xs=pts.map((_,i)=>i/(pts.length-1)*w);
+  const ys=pts.map(p=>(1-(p-mn)/(mx-mn))*h*0.8+h*0.1);
+  const path='M'+xs.map((x,i)=>x+','+ys[i]).join(' L');
+  const fill='M'+xs[0]+','+h+' L'+xs.map((x,i)=>x+','+ys[i]).join(' L')+' L'+xs[xs.length-1]+','+h+' Z';
+  el.innerHTML='<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e5c0" stop-opacity="0.3"/><stop offset="100%" stop-color="#00e5c0" stop-opacity="0"/></linearGradient></defs><path d="'+fill+'" fill="url(#cg)"/><path d="'+path+'" fill="none" stroke="#00e5c0" stroke-width="1.5"/></svg>';
+}
+drawChart();
+
+function renderOB(){
+  const asks=document.getElementById('asks');
+  const bids=document.getElementById('bids');
+  asks.innerHTML='';bids.innerHTML='';
+  for(let i=5;i>=1;i--){
+    const p=(price+i*0.04).toFixed(2);
+    const sz=(Math.random()*4+0.5).toFixed(2);
+    const w=Math.random()*70+10;
+    asks.innerHTML+='<div class="ob-row ask"><span style="color:var(--danger)">'+p+'</span><span>'+sz+'</span><span>'+(p*sz).toFixed(0)+'</span><div class="ob-bar" style="width:'+w+'%"></div></div>';
+  }
+  document.getElementById('spread-row').textContent='$'+price.toFixed(2)+' · Spread: $0.02';
+  for(let i=1;i<=5;i++){
+    const p=(price-i*0.04).toFixed(2);
+    const sz=(Math.random()*4+0.5).toFixed(2);
+    const w=Math.random()*70+10;
+    bids.innerHTML+='<div class="ob-row bid"><span style="color:var(--success)">'+p+'</span><span>'+sz+'</span><span>'+(p*sz).toFixed(0)+'</span><div class="ob-bar" style="width:'+w+'%"></div></div>';
+  }
+}
+renderOB();
+
+function tickPrice(){
+  price+=((Math.random()-0.49)*0.3);
+  price=Math.max(140,Math.min(156,price));
+  document.getElementById('live-price').textContent='$'+price.toFixed(2);
+  const pct=((price-145)/145*100).toFixed(2);
+  const ce=document.getElementById('price-change');
+  ce.textContent=(pct>0?'+':'')+pct+'%';
+  ce.className='price-change '+(pct>0?'positive':'negative');
+  document.getElementById('entry-price').textContent='$'+price.toFixed(2);
+  const sz=parseFloat(document.getElementById('size-input').value)||1;
+  const lv=parseInt(lev)||5;
+  document.getElementById('notional').textContent='$'+(price*sz*lv).toFixed(2);
+}
+setInterval(tickPrice,1800);
+setInterval(renderOB,3000);
+
+function setTab(t){
+  tab=t;
+  document.getElementById('tab-buy').className='tab '+(t==='buy'?'active buy':'');
+  document.getElementById('tab-sell').className='tab '+(t==='sell'?'active sell':'sell');
+  const btn=document.getElementById('submit-btn');
+  btn.className='submit-btn '+(t==='buy'?'buy-btn':'sell-btn');
+  btn.textContent=t==='buy'?'Open Long Position':'Open Short Position';
+}
+
+function setLev(el,l){
+  lev=l;
+  document.querySelectorAll('.lev-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function togglePrivacy(on){
+  ['pos-size','pos-entry','pos-liq','liq-val'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){on?el.classList.add('blurred'):el.classList.remove('blurred');}
+  });
+  document.querySelectorAll('.blurred').forEach(el=>{
+    on?el.classList.add('blurred'):el.classList.remove('blurred');
+  });
+  document.getElementById('liq-badge').style.display=on?'':'none';
+  document.getElementById('pos-priv-label').style.display=on?'':'none';
+  document.getElementById('privacy-desc').textContent=on?
+    'Position size, entry price & liquidation threshold are computed privately via MPC. Only final PnL is revealed on-chain.':
+    'Privacy mode off — position data visible on-chain. Front-running & targeted liquidations are possible.';
+}
+
+function submitOrder(){
+  const toast=document.getElementById('toast');
+  [1,2,3,4].forEach(i=>document.getElementById('step'+i).className='toast-step');
+  document.getElementById('step1').className='toast-step done';
+  toast.classList.add('show');
+  let i=2;
+  const iv=setInterval(()=>{
+    if(i<=4){document.getElementById('step'+i).className='toast-step done';i++;}
+    else{clearInterval(iv);setTimeout(()=>toast.classList.remove('show'),2500);}
+  },600);
+}
+
+function cycleMarket(){
+  mktIdx=(mktIdx+1)%markets.length;
+  document.getElementById('market-name').textContent=markets[mktIdx];
+  drawChart();
+}
+
+function connectWallet(){
+  const btn=document.querySelector('.wallet-btn');
+  btn.textContent='GhJ7...mK9p';
+  btn.style.background='rgba(0,229,192,0.15)';
+  btn.style.color='var(--accent)';
+  btn.style.border='1px solid rgba(0,229,192,0.3)';
+}
+</script>
+</body>
+  </html>
