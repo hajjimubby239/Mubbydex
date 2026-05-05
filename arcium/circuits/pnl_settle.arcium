@@ -1,0 +1,19 @@
+circuit pnl_settle(
+    secret position_size: u64,
+    secret entry_price: u64,
+    secret direction: u8,
+    public exit_price: u64,
+) -> (public realized_pnl: i64) {
+
+    let price_delta = if exit_price > entry_price {
+        (exit_price - entry_price) as i64
+    } else {
+        -((entry_price - exit_price) as i64)
+    };
+
+    realized_pnl = if direction == 0u8 {
+        price_delta * (position_size as i64)
+    } else {
+        -(price_delta * (position_size as i64))
+    };
+}
